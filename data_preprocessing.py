@@ -35,7 +35,7 @@ if __name__ == '__main__':
     data2 = pd.read_csv('E:\Python_workspace\Traffic-flow-forecas\data\服创大赛-基站经纬度数据.csv')
     data3 = pd.merge(data1, data2, on='laci')
     data3 = data3.dropna()
-    # data3.to_csv("3.csv", index=None)
+    # data3.to_csv("latAndLon.csv", index=None)
 
     data4 = data3.groupby(by='imsi').apply(lambda x: x.sort_values('timestamp', ascending=True)).reset_index(drop=True)
     data4.to_csv("4.csv", index=None)

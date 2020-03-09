@@ -8,40 +8,52 @@
 
 
 import json
-
 from urllib import parse
-
 from wsgiref.simple_server import make_server
+from thermodynamic import ThermodynamicChart
 
 
-# 定义函数，参数是函数的两个参数，都是python本身定义的，默认就行了。
+def getHour(environ):
+    params = parse.parse_qs(environ['QUERY_STRING'])
+    hour = params.get('hour', [''])[0]
+    ther = ThermodynamicChart()
+    data = ther.getGroupByHour(hour=int(hour))
+    data = ther.getJson(data)
+    return data
+
+
+def getAll(environ):
+    result = "["
+    ther = ThermodynamicChart()
+    for i in range(0, 24):
+        data = ther.getGroupByHour(hour=i)
+        data = ther.getJson(data)
+        result = result+(str(data)+",")
+    return result[:-1]+"]"
+
 
 def application(environ, start_response):
-    # 定义文件请求的类型和当前请求成功的code
+    start_response('200 OK', [('Content-Type', 'application/json;charset=UTF-8')])
+    position = environ['PATH_INFO']
+    function = None
+    for url in urls:
+        if url[0] == position:
+            function = url[1]
+            break
+    if function:
+        info = function(environ)
+    else:
+        info = 'Wa oh 404'
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
-
-    # environ是当前请求的所有数据，包括Header和URL，body，这里只涉及到get
-
-    # 获取当前get请求的所有数据，返回是string类型
-
-    params = parse.parse_qs(environ['QUERY_STRING'])
-
-    # 获取get中key为name的值
-
-    name = params.get('hour', [''])[0]
-
-
-
-
-    return [json.dumps(dic).encode('utf-8')]
+    return [info.encode('utf-8')]
 
 
 if __name__ == "__main__":
-    port = 5088
-
+    urls = [
+        ('/getHour', getHour),
+        ('/getAll', getAll),
+    ]
+    port = 1724
     httpd = make_server("0.0.0.0", port, application)
-
     print("serving http on port {0}...".format(str(port)))
-
     httpd.serve_forever()
